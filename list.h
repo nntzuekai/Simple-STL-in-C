@@ -21,7 +21,7 @@ typedef Node *Iterator;
 struct _list {
     Iterator this;
     Iterator head, tail;
-    int count;
+    unsigned int count;
     Comparer comp;
 };
 typedef struct _list List;
@@ -39,6 +39,10 @@ unsigned int list_size(const List *plist);
 Iterator list_begin(const List *plist);
 
 Iterator list_end(const List *plist);
+
+Item list_front(const List *plist);
+
+Item list_back(const List *plist);
 
 Iterator list_assign(List *plist1, const List *plist2);
 
@@ -75,5 +79,7 @@ Iterator list_find(const List *plist, const Item*);
 Item *list_get_item_ptr(Iterator pt);
 
 Item list_get_item(Iterator pt);
+
+Iterator list_resize(List *plist, unsigned int n);
 
 #endif // LIST_H_INCLUDED

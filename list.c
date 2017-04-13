@@ -49,6 +49,28 @@ Iterator list_end(const List *plist) {
     return plist->this;
 }
 
+Item list_front(const List *plist) {
+    if(plist->head == plist->this) {
+        Item item_t;
+        fprintf(stderr, "Empty list! Meaningless return value!\n");
+        return item_t;
+    }
+    else {
+        return plist->head->item;
+    }
+}
+
+Item list_back(const List *plist) {
+    if(plist->tail == plist->this) {
+        Item item_t;
+        fprintf(stderr, "Empty list! Meaningless return value!\n");
+        return item_t;
+    }
+    else {
+        return plist->tail->item;
+    }
+}
+
 List* list_destroy(List *plist) {
     // TODO (hrk#1#2017-4-9) add a error handling
     Iterator p1 = plist->head, p2, pend = plist->this;
@@ -108,21 +130,29 @@ Iterator list_push_back(List *plist, const Item item) {
 Item list_pop_front(List *plist) {
     // TODO (hrk#1#2017-4-9) Free error handling
     Item item_t;
+    memset(&item_t, 0, sizeof(item_t));
+
     if(plist->head == plist->this) {
         fprintf(stderr, "Empty list! Meaningless return value!\n");
         return item_t;
     }
-    item_t = plist->head->item;
-    Iterator pt = plist->head->next;
+    else {
+        item_t = plist->head->item;
+        Iterator pnext = plist->head->next;
 
-    pt->prev = plist->this;
-    free(plist->head);
+        if(pnext == plist->this) {
+            plist->tail = plist->this;
+        }
+        else {
+            pnext->prev = plist->this;
+        }
 
-    if(plist->head == plist->tail)plist->tail = plist->this;
-    plist->head = pt;
-    plist->count--;
+        free(plist->head);
+        plist->head = pnext;
+        plist->count--;
 
-    return item_t;
+        return item_t;
+    }
 }
 
 Item list_pop_back(List *plist) {
@@ -134,15 +164,22 @@ Item list_pop_back(List *plist) {
         fprintf(stderr, "Empty list! Meaningless return value!\n");
         return item_t;
     }
-    item_t = plist->tail->item;
-    Iterator pt = plist->tail->prev;
-    pt->next = plist->this;
-    if(plist->head == plist->tail)plist->head = plist->this;
-    free(plist->tail);
-    plist->tail = pt;
-    plist->count--;
+    else {
+        item_t = plist->tail->item;
+        Iterator pprev = plist->tail->prev;
 
-    return item_t;
+        if(pprev == plist->this) {
+            plist->head = plist->this;
+        }
+        else {
+            pprev->next = plist->this;
+        }
+        free(plist->tail);
+        plist->tail = pprev;
+        plist->count--;
+
+        return item_t;
+    }
 }
 
 int list_swap(List *plist1, List *plist2) {
@@ -457,8 +494,64 @@ Item *list_get_item_ptr(Iterator pt) {
 Item list_get_item(Iterator pt) {
     if(pt == NULL || pt == ((List*)pt)->this) {
         Item item_t;
-        memset(&item_t, 0, sizeof(item_t));
+        //memset(&item_t, 0, sizeof(item_t));
+        fprintf(stderr, "Empty list! Meaningless return value!\n");
         return item_t;
     }
     else return pt->item;
+}
+
+Iterator list_resize(List* plist, unsigned int n) {
+    if(plist == NULL)return NULL;
+
+    unsigned int i = plist->count;
+    if(i == n || (int)n < 0) {
+        return plist->tail;
+    }
+    else if(n==0){
+        list_clear(plist);
+    }
+    else if(i > n) {
+        while(i-- > n) {
+            //list_pop_back(plist);
+            Iterator pprev = plist->tail->prev;
+
+            if(pprev == plist->this) {
+                plist->head = plist->this;
+            }
+            else {
+                pprev->next = plist->this;
+            }
+
+            free(plist->tail);
+            plist->tail = pprev;
+            plist->count--;
+        }
+        return plist->tail;
+    }
+    else if(i < n) {
+        Item item;
+        memset(&item, 0, sizeof(item));
+        while(i++ < n) {
+            //list_push_back(plist,item);
+            Node *pn;
+            pn = (Node*)list_malloc(sizeof(Node));
+
+            pn->item = item;
+            pn->next = plist->this;
+            pn->prev = plist->tail;
+
+            if(plist->head == plist->this) { //To judge if list is empty
+                plist->head = pn;
+            }
+            else {
+                plist->tail->next = pn;
+            }
+            plist->tail = pn;
+            plist->count++;
+        }
+        return plist->tail;
+    }
+
+    return NULL;
 }
