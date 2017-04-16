@@ -191,20 +191,20 @@ int list_swap(List *plist1, List *plist2) {
     return 1;
 }
 
-Iterator list_insert(List *plist, Iterator pos, const Item item) {
+Iterator list_insert(List *Dst, Iterator pos, const Item item) {
     if(pos == NULL) {
         return NULL;
     }
-    /*else if(pos == plist->head) {
-        return list_push_front(plist, item);
+    /*else if(pos == Dst->head) {
+        return list_push_front(Dst, item);
     }
-    else if(pos == plist->this) {
-        return list_push_back(plist, item);
+    else if(pos == Dst->this) {
+        return list_push_back(Dst, item);
     }*/
     else {
-        Iterator prev = (pos == plist->this) ? plist->tail : pos->prev;
+        Iterator prev = (pos == Dst->this) ? Dst->tail : pos->prev;
         Iterator add = (Iterator)list_malloc(sizeof(Node));
-        Iterator Real_End = plist->this;
+        Iterator Real_End = Dst->this;
 
         add->item = item;
         add->prev = prev;
@@ -214,31 +214,31 @@ Iterator list_insert(List *plist, Iterator pos, const Item item) {
             prev->next = add;
         }
         else {
-            plist->head = add;
+            Dst->head = add;
         }
 
         if(pos != Real_End) {
             pos->prev = add;
         }
         else {
-            plist->tail = add;
+            Dst->tail = add;
         }
 
-        plist->count++;
+        Dst->count++;
 
         return add;
     }
 }
 
-Iterator list_insert2(List *plist, Iterator pos, Iterator first, Iterator last) {
+Iterator list_insert2(List *Dst, Iterator pos, Iterator first, Iterator last) {
     if(pos == NULL || first == NULL || last == NULL || first == ((List*)first)->this) { //To guarantee the validity of "first"
         return NULL;
     }
     else {
         Iterator pt;
-        Iterator prev = (pos == plist->this) ? plist->tail : pos->prev;
+        Iterator prev = (pos == Dst->this) ? Dst->tail : pos->prev;
         Iterator add;
-        Iterator Real_End = plist->this;
+        Iterator Real_End = Dst->this;
 
         for(pt = first; pt != last; pt = pt->next) {
             add = (Node*)list_malloc(sizeof(Node));
@@ -251,16 +251,16 @@ Iterator list_insert2(List *plist, Iterator pos, Iterator first, Iterator last) 
                 prev->next = add;
             }
             else {
-                plist->head = add;
+                Dst->head = add;
             }
 
             if(pos != Real_End) {
                 pos->prev = add;
             }
             else {
-                plist->tail = add;
+                Dst->tail = add;
             }
-            plist->count++;
+            Dst->count++;
 
 
             prev = add;
@@ -270,18 +270,18 @@ Iterator list_insert2(List *plist, Iterator pos, Iterator first, Iterator last) 
     }
 }
 
-Iterator list_assign(List *plist1, const List *plist2) {
-    if(plist2->head == plist2->this) {
-        return plist1->this;
+Iterator list_assign(List *Dst, const List *Src) {
+    if(Src->head == Src->this) {
+        return Dst->this;
     }
     else {
         Iterator pt;
-        Iterator first = plist2->head;
+        Iterator first = Src->head;
         Iterator add;
-        Iterator last = plist2->this;
-        Iterator End1 = plist1->this, prev = End1;
+        Iterator last = Src->this;
+        Iterator End1 = Dst->this, prev = End1;
 
-        list_clear(plist1);
+        list_clear(Dst);
 
         for(pt = first; pt != last; pt = pt->next) {
             add = (Node*)list_malloc(sizeof(Node));
@@ -294,20 +294,21 @@ Iterator list_assign(List *plist1, const List *plist2) {
                 prev->next = add;
             }
             else {
-                plist1->head = add;
+                Dst->head = add;
             }
 
-            plist1->tail = add;
-            plist1->count++;
+            Dst->tail = add;
+            Dst->count++;
 
 
             prev = add;
         }
 
-        return plist1->tail;
+        return Dst->tail;
     }
 }
-Iterator list_erase(List * plist, Iterator pos) {
+
+Iterator list_erase(List * Dst, Iterator pos) {
     if(pos == NULL || pos == ((List*)pos)->this ) {
         return pos;
     }
@@ -315,52 +316,52 @@ Iterator list_erase(List * plist, Iterator pos) {
         Iterator prev = pos->prev;
         Iterator next = pos->next;
 
-        if(prev != plist->this) {
+        if(prev != Dst->this) {
             prev->next = next;
         }
         else {
-            plist->head = next;
+            Dst->head = next;
         }
 
-        if(next != plist->this) {
+        if(next != Dst->this) {
             next->prev = prev;
         }
         else {
-            plist->tail = prev;
+            Dst->tail = prev;
         }
 
-        plist->count--;
+        Dst->count--;
         free(pos);
 
         return next;
     }
 }
 
-Iterator list_erase2(List * plist, Iterator first, Iterator last) {
+Iterator list_erase2(List * Dst, Iterator first, Iterator last) {
     if(first == NULL || last == NULL || first == ((List*)first)->this) {
         return NULL;
     }
     else {
         Iterator pt1, pt2, prev = first->prev;
 
-        if(prev != plist->this) {
+        if(prev != Dst->this) {
             prev->next = last;
         }
         else {
-            plist->head = last;
+            Dst->head = last;
         }
 
-        if(last != plist->this) {
+        if(last != Dst->this) {
             last->prev = prev;
         }
         else {
-            plist->tail = prev;
+            Dst->tail = prev;
         }
 
         for(pt1 = first; pt1 != last; pt1 = pt2) {
             pt2 = pt1->next;
             free(pt1);
-            plist->count--;
+            Dst->count--;
         }
 
         return last;
@@ -434,6 +435,7 @@ int list_equal(const List * plist1, const List * plist2) {
 
 int list_for_each(Iterator first, Iterator last, void (*foo)(Item*)) {
     if(first == NULL || last == NULL || foo == NULL || first == ((List*)first)->this) {
+        fprintf(stderr, "Invalid Iterator first OR last OR Invalid function OR Empty list!\n");
         return 0;
     }
     else {
@@ -451,6 +453,7 @@ int list_for_each(Iterator first, Iterator last, void (*foo)(Item*)) {
 
 int list_for_each_backward(Iterator first, Iterator last, void (*foo)(Item*)) {
     if(first == NULL || last == NULL || foo == NULL || first == ((List*)first)->this) {
+        fprintf(stderr, "Invalid Iterator first OR last OR Invalid function OR Empty list!\n");
         return 0;
     }
     else {
@@ -486,6 +489,7 @@ Iterator list_find(const List * plist, const Item * pitem) {
 
 Item *list_get_item_ptr(Iterator pt) {
     if(pt == NULL || pt == ((List*)pt)->this) {
+        fprintf(stderr, "Invalid pointer!\n");
         return NULL;
     }
     else return &(pt->item);
@@ -502,55 +506,265 @@ Item list_get_item(Iterator pt) {
 }
 
 Iterator list_resize(List* plist, unsigned int n) {
-    if(plist == NULL)return NULL;
-
-    unsigned int i = plist->count;
-    if(i == n || (int)n < 0) {
-        return plist->tail;
+    if(plist == NULL) {
+        fprintf(stderr, "plist is NULL!\n");
+        return NULL;
     }
-    else if(n==0){
-        list_clear(plist);
-    }
-    else if(i > n) {
-        while(i-- > n) {
-            //list_pop_back(plist);
-            Iterator pprev = plist->tail->prev;
-
-            if(pprev == plist->this) {
-                plist->head = plist->this;
-            }
-            else {
-                pprev->next = plist->this;
-            }
-
-            free(plist->tail);
-            plist->tail = pprev;
-            plist->count--;
+    else {
+        unsigned int i = plist->count;
+        if(i == n || (int)n < 0) {
+            fprintf(stderr, "i==n OR n<0 \n");
+            return plist->tail;
         }
-        return plist->tail;
-    }
-    else if(i < n) {
-        Item item;
-        memset(&item, 0, sizeof(item));
-        while(i++ < n) {
-            //list_push_back(plist,item);
-            Node *pn;
-            pn = (Node*)list_malloc(sizeof(Node));
-
-            pn->item = item;
-            pn->next = plist->this;
-            pn->prev = plist->tail;
-
-            if(plist->head == plist->this) { //To judge if list is empty
-                plist->head = pn;
-            }
-            else {
-                plist->tail->next = pn;
-            }
-            plist->tail = pn;
-            plist->count++;
+        else if(n == 0) {
+            fprintf(stderr, "n==0!\n");
+            list_clear(plist);
         }
-        return plist->tail;
+        else if(i > n) {
+            while(i-- > n) {
+                //list_pop_back(plist);
+                Iterator pprev = plist->tail->prev;
+
+                if(pprev == plist->this) {
+                    plist->head = plist->this;
+                }
+                else {
+                    pprev->next = plist->this;
+                }
+
+                free(plist->tail);
+                plist->tail = pprev;
+                plist->count--;
+            }
+            return plist->tail;
+        }
+        else if(i < n) {
+            Item item;
+            memset(&item, 0, sizeof(item));
+            while(i++ < n) {
+                //list_push_back(plist,item);
+                Node *pn;
+                pn = (Node*)list_malloc(sizeof(Node));
+
+                pn->item = item;
+                pn->next = plist->this;
+                pn->prev = plist->tail;
+
+                if(plist->head == plist->this) { //To judge if list is empty
+                    plist->head = pn;
+                }
+                else {
+                    plist->tail->next = pn;
+                }
+                plist->tail = pn;
+                plist->count++;
+            }
+            return plist->tail;
+        }
+
+        return NULL;
+    }
+}
+
+int list_for_all(const List *plist, void (*foo)(Item*)) {
+    if(plist->head == plist->this) {
+        fprintf(stderr, "(Empty List)\n");
+        return 0;
+    }
+    else {
+        Iterator Real_End = plist->this;
+        Iterator pt = plist->head;
+        int count = 0;
+        for(; pt != NULL && pt != Real_End; pt = pt->next) {
+            (*foo)(&(pt->item));
+            count++;
+        }
+        return count;
+    }
+}
+
+int list_for_all_backward(const List *plist, void (*foo)(Item*)) {
+    if(plist->head == plist->this) {
+        fprintf(stderr, "(Empty List)\n");
+        return 0;
+    }
+    else {
+        Iterator Real_End = plist->this;
+        Iterator pt = plist->tail;
+        int count = 0;
+        for(; pt != NULL && pt != Real_End; pt = pt->prev) {
+            (*foo)(&(pt->item));
+            count++;
+        }
+        return 0;
+    }
+}
+
+Iterator list_splice(List *Dst, Iterator pos, List *Src) {
+    if(Src->head == Src->this) {
+        fprintf(stderr, "Source is Empty!\n");
+        return pos;
+    }
+    else {
+        Iterator End1 = Dst->this;
+        Iterator pprev = (pos == End1) ? Dst->tail : pos->prev;
+
+        if(pprev == End1) {
+            Dst->head = Src->head;
+        }
+        else {
+            pprev->next = Src->head;
+        }
+        Src->head->prev = pprev;
+
+        if(pos == End1) {
+            Dst->tail = Src->tail;
+        }
+        else {
+            pos->prev = Src->tail;
+        }
+        Src->tail->next = pos;
+
+        Dst->count += Src->count;
+        Src->count = 0;
+        Src->head = Src->tail = Src->this;
+
+        return pos;
+    }
+}
+
+Iterator list_splice1(List *Dst, Iterator pos, List *Src, Iterator x) {
+    if(x == NULL || x == Src->this) {
+        fprintf(stderr, "Iterator x is not valid!\n");
+        return pos;
+    }
+    else if(pos == NULL) {
+        fprintf(stderr, "Iterator pos is not valid!\n");
+        return pos;
+    }
+    else if(pos == x || pos == x->next) {
+        fprintf(stderr, "Iterator x equals to pos!\nOR is already before pos!\n");
+        return  pos;
+    }
+    else {
+        Iterator End1 = Dst->this;
+        Iterator End2 = Src->this;
+        Iterator prev1 = (pos == End1) ? Dst->tail : pos->prev;
+        Iterator prev2 = x->prev;
+        Iterator next2 = x->next;
+
+        x->prev = prev1;
+        x->next = pos;
+
+        if(pos == End1) {
+            Dst->tail = x;
+        }
+        else {
+            pos->prev = x;
+        }
+
+        if(prev1 == End1) {
+            Dst->head = x;
+        }
+        else {
+            prev1->next = x;
+        }
+
+        ++Dst->count;
+        --Src->count;
+
+        if(prev2 == End2) {
+            Src->head = next2;
+        }
+        else {
+            prev2->next = next2;
+        }
+
+        if(next2 == End2) {
+            Src->tail = prev2;
+        }
+        else {
+            next2->prev = prev2;
+        }
+
+        return x;
+    }
+}
+
+Iterator list_splice2(List *Dst, Iterator pos, List *Src, Iterator first, Iterator last) {
+    if(pos == NULL) {
+        fprintf(stderr, "NULL Iterator pos!\n");
+        return NULL;
+    }
+    else if(first == NULL || first == Src->this) {
+        fprintf(stderr, "Invalid Iterator first!\n");
+        return NULL;
+    }
+    else if(last == NULL || first == last) {
+        fprintf(stderr, "Invalid Iterator last!\n");
+        return NULL;
+    }
+    else if(pos == last) {
+        return pos;
+    }
+    else {
+        int count = 0;
+        Iterator pt = first;
+        Iterator End1 = Dst->this;
+        Iterator End2 = Src->this;
+
+        for(; pt && pt != last; pt = pt->next) {
+            if(pt == pos)break;
+            count++;
+        }
+        if(pt == pos) {
+            fprintf(stderr, "Iterator pos included in the range [first, last)!\n");
+            return NULL;
+        }
+        else if(pt == NULL) {
+            fprintf(stderr, "Bad List (Pointer to NULL)!\n");
+            return NULL;
+        }
+
+        Iterator prev1 = (pos == End1) ? Dst->tail : pos->prev;
+        Iterator prev2 = first->prev;
+        Iterator back2 = (last == End2) ? Src->tail : last->prev;
+
+        first->prev = prev1;
+        back2->next = pos;
+
+        if(prev1 == End1) {
+            Dst->head = first;
+        }
+        else {
+            prev1->next = first;
+        }
+
+        if(pos == End1) {
+            Dst->tail = back2;
+        }
+        else {
+            pos->prev = back2;
+        }
+
+        Dst->count += count;
+        Src->count -= count;
+
+        if(prev2 == End2) {
+            Src->head = last;
+        }
+        else {
+            prev2->next = last;
+        }
+
+        if(last == End2) {
+            Src->tail = back2;
+        }
+        else {
+            last->prev = prev2;
+        }
+
+        return pos;
     }
 
     return NULL;

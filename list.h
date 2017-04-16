@@ -44,35 +44,39 @@ Item list_front(const List *plist);
 
 Item list_back(const List *plist);
 
-Iterator list_assign(List *plist1, const List *plist2);
+Iterator list_assign(List *Dst, const List *Src);
 
-Iterator list_insert(List *plist, Iterator pos, const Item item);
+Iterator list_insert(List *Dst, Iterator pos, const Item item);
 
-Iterator list_erase(List *plist, Iterator pos);
+Iterator list_erase(List *Dst, Iterator pos);
 
 int list_clear(List *plist);
 
 List* list_destroy(List *plist);
 
-Iterator list_push_front(List *plist, const Item item);
+Iterator list_push_front(List *Dst, const Item item);
 
-Iterator list_push_back(List *plist, const Item item);
+Iterator list_push_back(List *Dst, const Item item);
 
-Item list_pop_front(List *plist);
+Item list_pop_front(List *Src);
 
-Item list_pop_back(List *plist);
+Item list_pop_back(List *Src);
 
 int list_swap(List *plist1, List *plist2);
 
-Iterator list_insert2(List *plist, Iterator pos, Iterator first, Iterator last);
+Iterator list_insert2(List *Dst, Iterator pos, Iterator first, Iterator last);
 
-Iterator list_erase2(List *plist, Iterator first, Iterator last);
+Iterator list_erase2(List *Dst, Iterator first, Iterator last);
 
 int list_equal(const List *plist1, const List *plist2);
 
 int list_for_each(Iterator first, Iterator last, void (*foo)(Item*));
 
 int list_for_each_backward(Iterator first, Iterator last, void (*foo)(Item*));
+
+int list_for_all(const List *plist, void (*foo)(Item*));
+
+int list_for_all_backward(const List *plist, void (*foo)(Item*));
 
 Iterator list_find(const List *plist, const Item*);
 
@@ -82,4 +86,9 @@ Item list_get_item(Iterator pt);
 
 Iterator list_resize(List *plist, unsigned int n);
 
+Iterator list_splice(List *Dst, Iterator pos, List *Src);
+
+Iterator list_splice1(List *Dst, Iterator pos, List *Src, Iterator x);
+
+Iterator list_splice2(List *Dst, Iterator pos, List *Src, Iterator first, Iterator last);
 #endif // LIST_H_INCLUDED
