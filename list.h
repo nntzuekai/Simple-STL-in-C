@@ -68,7 +68,9 @@ Iterator list_insert2(List *Dst, Iterator pos, Iterator first, Iterator last);
 
 Iterator list_erase2(List *Dst, Iterator first, Iterator last);
 
-int list_equal(const List *plist1, const List *plist2);
+bool list_equal(const List *plist1, const List *plist2);
+
+bool list_less(const List *plist1, const List *plist2);
 
 int list_for_each(Iterator first, Iterator last, void (*foo)(Item*));
 
@@ -91,4 +93,11 @@ Iterator list_splice(List *Dst, Iterator pos, List *Src);
 Iterator list_splice1(List *Dst, Iterator pos, List *Src, Iterator x);
 
 Iterator list_splice2(List *Dst, Iterator pos, List *Src, Iterator first, Iterator last);
+
+Iterator list_remove(List *plist, const Item item);
+
+Iterator list_unique(List *plist);
+
+Iterator list_merge(List *Dst, List *Src);
+
 #endif // LIST_H_INCLUDED

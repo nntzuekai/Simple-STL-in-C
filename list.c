@@ -4,13 +4,17 @@
 #include<error.h>
 #include "list.h"
 
-static void* list_malloc(size_t size_of_element) {
+inline static void* list_malloc(size_t size_of_element) {
     void *p = malloc(size_of_element);
     if(p == NULL) {
         fprintf(stderr, "Memory allocating error!\n");
         exit(1);
     }
     return p;
+}
+
+inline static int list_default_comparer(const Item *pitem1, const Item *pitem2) {
+    return memcmp(pitem1, pitem2, sizeof(Item));
 }
 
 List* list_create(List *plist, Comparer comp) {
@@ -384,20 +388,23 @@ int list_clear(List * plist) {
     return 1;
 }
 
-int list_equal(const List * plist1, const List * plist2) {
-    if(plist1->comp == NULL && plist2->comp != NULL) {
-        fprintf(stderr, "Former list without Comparer!\n");
-        return 0;
-    }
-    else if(plist2->comp == NULL && plist1->comp != NULL) {
-        fprintf(stderr, "Latter list without Comparer!\n");
-        return 0;
-    }
-    else if(plist1->count != plist2->count) {
-        return 0;
+bool list_equal(const List * plist1, const List * plist2) {
+    if(plist1 == plist2) {
+        return 1;
     }
     else if(plist1->comp != plist2->comp) {
-        return 0;
+        if(plist1->comp == NULL) {
+            fprintf(stderr, "Former List without specialized Comparer!\n");
+            return 0;
+        }
+        else if(plist2->comp == NULL) {
+            fprintf(stderr, "Latter List without specialized Comparer!\n");
+            return 0;
+        }
+        else {
+            fprintf(stderr, "Conflict Comparer!\n");
+            return 0;
+        }
     }
     else {
         Iterator pt1, pt2;
@@ -769,3 +776,241 @@ Iterator list_splice2(List *Dst, Iterator pos, List *Src, Iterator first, Iterat
 
     return NULL;
 }
+
+Iterator list_remove(List *plist, const Item item) {
+    Iterator pt = plist->head;
+    Iterator end = plist->this;
+    Iterator prev, next;
+    Comparer cmp = plist->comp;
+    if(cmp) {
+        while(pt && pt != end) {
+            if((*cmp)(&(pt->item), &item) == 0) {
+                //pt = list_erase(plist, pt);
+                prev = pt->prev;
+                next = pt->next;
+
+                if(prev != end) {
+                    prev->next = next;
+                }
+                else {
+                    plist->head = next;
+                }
+
+                if(next != end) {
+                    next->prev = prev;
+                }
+                else {
+                    plist->tail = prev;
+                }
+
+                plist->count--;
+                free(pt);
+
+                pt = next;
+            }
+            else pt = pt->next;
+        }
+    }
+    else {
+        while(pt && pt != end) {
+            if(memcmp(&(pt->item), &item, sizeof(Item)) == 0) {
+                //pt = list_erase(plist, pt);
+                prev = pt->prev;
+                next = pt->next;
+
+                if(prev != end) {
+                    prev->next = next;
+                }
+                else {
+                    plist->head = next;
+                }
+
+                if(next != end) {
+                    next->prev = prev;
+                }
+                else {
+                    plist->tail = prev;
+                }
+
+                plist->count--;
+                free(pt);
+
+                pt = next;
+            }
+            else pt = pt->next;
+        }
+    }
+    return pt;
+}
+
+Iterator list_unique(List *plist) {
+    Iterator p1, p2, prev, next;
+    p1 = plist->this;
+    p2 = plist->head;
+    Iterator end = plist->this;
+    Comparer cmp = plist->comp;
+    if(cmp) {
+        while(p2 && p2 != end) {
+            if(p1 != end && (*cmp)(&(p1->item), &(p2->item)) == 0) {
+                //p2 = list_erase(plist, p2);
+                prev = p2->prev;
+                next = p2->next;
+
+                if(prev != end) {
+                    prev->next = next;
+                }
+                else {
+                    plist->head = next;
+                }
+
+                if(next != end) {
+                    next->prev = prev;
+                }
+                else {
+                    plist->tail = prev;
+                }
+
+                plist->count--;
+                free(p2);
+
+                p2 = next;
+            }
+            else {
+                p1 = p2;
+                p2 = p2->next;
+            }
+        }
+    }
+    else {
+        while(p2 && p2 != end) {
+            if(p1 != end && memcmp(&(p1->item), &(p2->item), sizeof(Item)) == 0) {
+                //p2 = list_erase(plist, p2);
+                prev = p2->prev;
+                next = p2->next;
+
+                if(prev != end) {
+                    prev->next = next;
+                }
+                else {
+                    plist->head = next;
+                }
+
+                if(next != end) {
+                    next->prev = prev;
+                }
+                else {
+                    plist->tail = prev;
+                }
+
+                plist->count--;
+                free(p2);
+
+                p2 = next;
+            }
+            else {
+                p1 = p2;
+                p2 = p2->next;
+            }
+        }
+    }
+    return p2;
+}
+
+Iterator list_merge(List *Dst, List *Src) {
+    if(Dst == Src) {
+        fprintf(stderr, "The same List!\n");
+        return NULL;
+    }
+    else if(Dst->comp != Src->comp) {
+        if(Dst->comp == NULL) {
+            fprintf(stderr, "Former List without specialized Comparer!\n");
+            return NULL;
+        }
+        else if(Src->comp == NULL) {
+            fprintf(stderr, "Latter List without specialized Comparer!\n");
+            return NULL;
+        }
+        else {
+            fprintf(stderr, "Conflict Comparer!\n");
+            return NULL;
+        }
+    }
+    else {
+        Iterator p1 = Dst->head;
+        Iterator p2 = Src->head;
+        Iterator end1 = Dst->this;
+        Iterator end2 = Src->this;
+        Iterator next;
+        Comparer cmp = Dst->comp ? Dst->comp : list_default_comparer;
+        while(p1 && p2 && p2 != end2) {
+            if((*cmp)(&(p1->item), &(p2->item)) > 0) {
+                next = p2->next;
+                list_splice1(Dst, p1, Src, p2);
+                p2 = next;
+            }
+            else {
+                p1 = p1->next;
+                if(p1 == end1) {
+                    list_splice2(Dst, p1, Src, p2, Src->this);
+                    break;
+                }
+            }
+        }
+        return p1;
+    }
+}
+
+bool list_less(const List *plist1, const List *plist2) {
+    if(plist1 == plist2) {
+        return 0;
+    }
+    else if(plist1->comp != plist2->comp) {
+        if(plist1->comp == NULL) {
+            fprintf(stderr, "Former List without specialized Comparer!\n");
+            return 0;
+        }
+        else if(plist2->comp == NULL) {
+            fprintf(stderr, "Latter List without specialized Comparer!\n");
+            return 0;
+        }
+        else {
+            fprintf(stderr, "Conflict Comparer!\n");
+            return 0;
+        }
+    }
+    else {
+        Iterator pt1, pt2;
+        Iterator end1 = plist1->this, end2 = plist2->this;
+
+        if(plist1->comp && plist2->comp) {
+            Comparer cmp = plist1->comp;
+
+            for(pt1 = plist1->head, pt2 = plist2->head;
+                    pt1 != end1 && pt2 != end2;
+                    pt1 = pt1->next, pt2 = pt2->next)
+            {
+                if( (*cmp)(&(pt1->item), &(pt2->item)) < 0) {
+                    return 1;
+                }
+            }
+            if(pt1 == end1 && pt2 == end2)return 0;
+            else if(pt1 == end1)return 1;
+            else return 0;
+        }
+        else {
+            for(pt1 = plist1->head, pt2 = plist2->head;
+                    pt1 != end1 && pt2 != end2;
+                    pt1 = pt1->next, pt2 = pt2->next)
+            {
+                if( memcmp(&(pt1->item), &(pt2->item), sizeof(Item)) < 0) {
+                    return 1;
+                }
+            }
+            if(pt1 == end1 && pt2 == end2)return 0;
+            else if(pt1 == end1)return 1;
+            else return 0;
+        }
+    }
+    return 0;
+}
+
