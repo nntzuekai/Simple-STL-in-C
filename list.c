@@ -1014,3 +1014,48 @@ bool list_less(const List *plist1, const List *plist2) {
     return 0;
 }
 
+
+#ifdef SORT_MODE_QUICK
+static void list_quick_sort(Comparer cmp, Iterator left, Iterator right){
+    if(left==right||right->next==left||((List*)right)->head==left){
+        return;
+    }
+    Iterator i=left,j=right;
+    Item k=left->item;
+    while(i!=j){
+        while(i!=j&&cmp(&(j->item),&k)>=0){
+            j=j->prev;
+        }
+        if(i!=j){
+            i->item=j->item;
+        }
+
+        while(i!=j&&cmp(&(i->item),&k)<=0){
+            i=i->next;
+        }
+        if(i!=j){
+            j->item=i->item;
+        }
+    }
+    i->item=k;
+    list_quick_sort(cmp,left,i->prev);
+    list_quick_sort(cmp,i->next,right);
+}
+
+
+Iterator list_sort(List *plist){
+    if(plist==NULL||plist->this!=(Iterator)plist){
+        fprintf(stderr,"Uninitialized List!\n");
+        return NULL;
+    }
+    else if(plist->count==0){
+        fprintf(stderr,"Empty List!\n");
+        return NULL;
+    }
+    else{
+        list_quick_sort(plist->comp?plist->comp:list_default_comparer,plist->head,plist->tail);
+        return plist->head;
+    }
+}
+
+#endif // SORT_MODE_QUICK

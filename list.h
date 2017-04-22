@@ -1,5 +1,6 @@
 #ifndef LIST_H_INCLUDED
 #define LIST_H_INCLUDED
+#define SORT_MODE_QUICK 1
 #include<stdbool.h>
 #include<stddef.h>
 
@@ -99,5 +100,7 @@ Iterator list_remove(List *plist, const Item item);
 Iterator list_unique(List *plist);
 
 Iterator list_merge(List *Dst, List *Src);
+
+Iterator list_sort(List *plist);
 
 #endif // LIST_H_INCLUDED
