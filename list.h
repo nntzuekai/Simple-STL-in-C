@@ -1,6 +1,7 @@
 #ifndef LIST_H_INCLUDED
 #define LIST_H_INCLUDED
 #define SORT_MODE_QUICK 1
+#undef DEBUG
 #include<stdbool.h>
 #include<stddef.h>
 
@@ -75,11 +76,11 @@ bool list_less(const List *plist1, const List *plist2);
 
 int list_for_each(Iterator first, Iterator last, void (*foo)(Item*));
 
-int list_for_each_backward(Iterator first, Iterator last, void (*foo)(Item*));
+int list_for_each_reverse(Iterator first, Iterator last, void (*foo)(Item*));
 
 int list_for_all(const List *plist, void (*foo)(Item*));
 
-int list_for_all_backward(const List *plist, void (*foo)(Item*));
+int list_for_all_reverse(const List *plist, void (*foo)(Item*));
 
 Iterator list_find(const List *plist, const Item*);
 

@@ -4,10 +4,14 @@
 #include<error.h>
 #include "list.h"
 
+inline static int list_error(char *location, char *err_msg){
+    return fprintf(stderr,"\n**********************\nError in %s :\n\t%s\n**********************\n",location,err_msg);
+}
+
 inline static void* list_malloc(size_t size_of_element) {
     void *p = malloc(size_of_element);
     if(p == NULL) {
-        fprintf(stderr, "Memory allocating error!\n");
+        list_error("list_malloc", "Memory allocating error!");
         exit(1);
     }
     return p;
@@ -56,7 +60,7 @@ Iterator list_end(const List *plist) {
 Item list_front(const List *plist) {
     if(plist->head == plist->this) {
         Item item_t;
-        fprintf(stderr, "Empty list! Meaningless return value!\n");
+        list_error("list_front", "Empty list! Meaningless return value!");
         return item_t;
     }
     else {
@@ -67,7 +71,7 @@ Item list_front(const List *plist) {
 Item list_back(const List *plist) {
     if(plist->tail == plist->this) {
         Item item_t;
-        fprintf(stderr, "Empty list! Meaningless return value!\n");
+        list_error("list_back", "Empty list! Meaningless return value!");
         return item_t;
     }
     else {
@@ -137,7 +141,7 @@ Item list_pop_front(List *plist) {
     memset(&item_t, 0, sizeof(item_t));
 
     if(plist->head == plist->this) {
-        fprintf(stderr, "Empty list! Meaningless return value!\n");
+        list_error("list_pop_front", "Empty list! Meaningless return value!");
         return item_t;
     }
     else {
@@ -165,7 +169,7 @@ Item list_pop_back(List *plist) {
     memset(&item_t, 0, sizeof(item_t));
 
     if(plist->head == plist->this) {
-        fprintf(stderr, "Empty list! Meaningless return value!\n");
+        list_error("list_pop_back", "Empty list! Meaningless return value!");
         return item_t;
     }
     else {
@@ -189,8 +193,24 @@ Item list_pop_back(List *plist) {
 int list_swap(List *plist1, List *plist2) {
     List list_t;
     list_t = *plist1;
-    *plist1 = *plist2;
-    *plist2 = list_t;
+
+    *plist1=*plist2;
+    plist1->this=(Iterator)plist1;
+    if(plist2->head==plist2->this){
+        plist1->head=plist1->tail=plist1->this;
+    }
+    else{
+        plist1->head->prev=plist1->tail->next=plist1->this;
+    }
+
+    *plist2=list_t;
+    plist2->this=(Iterator)plist2;
+    if(list_t.head==list_t.this){
+        plist2->head=plist2->tail=plist2->this;
+    }
+    else{
+        plist2->head->prev=plist2->tail->next=plist2->this;
+    }
 
     return 1;
 }
@@ -394,15 +414,15 @@ bool list_equal(const List * plist1, const List * plist2) {
     }
     else if(plist1->comp != plist2->comp) {
         if(plist1->comp == NULL) {
-            fprintf(stderr, "Former List without specialized Comparer!\n");
+            list_error("list_equal", "Former List without specialized Comparer!");
             return 0;
         }
         else if(plist2->comp == NULL) {
-            fprintf(stderr, "Latter List without specialized Comparer!\n");
+            list_error("list_equal", "Latter List without specialized Comparer!");
             return 0;
         }
         else {
-            fprintf(stderr, "Conflict Comparer!\n");
+            list_error("list_equal", "Conflict Comparer!");
             return 0;
         }
     }
@@ -442,7 +462,7 @@ bool list_equal(const List * plist1, const List * plist2) {
 
 int list_for_each(Iterator first, Iterator last, void (*foo)(Item*)) {
     if(first == NULL || last == NULL || foo == NULL || first == ((List*)first)->this) {
-        fprintf(stderr, "Invalid Iterator first OR last OR Invalid function OR Empty list!\n");
+        list_error("list_for_each", "invalid iterator first OR last OR invalid function OR empty list!");
         return 0;
     }
     else {
@@ -458,9 +478,9 @@ int list_for_each(Iterator first, Iterator last, void (*foo)(Item*)) {
     }
 }
 
-int list_for_each_backward(Iterator first, Iterator last, void (*foo)(Item*)) {
+int list_for_each_reverse(Iterator first, Iterator last, void (*foo)(Item*)) {
     if(first == NULL || last == NULL || foo == NULL || first == ((List*)first)->this) {
-        fprintf(stderr, "Invalid Iterator first OR last OR Invalid function OR Empty list!\n");
+        list_error("list_for_each_reverse", "Invalid Iterator first OR last OR Invalid function OR Empty list!");
         return 0;
     }
     else {
@@ -496,7 +516,7 @@ Iterator list_find(const List * plist, const Item * pitem) {
 
 Item *list_get_item_ptr(Iterator pt) {
     if(pt == NULL || pt == ((List*)pt)->this) {
-        fprintf(stderr, "Invalid pointer!\n");
+        list_error("list_get_item_ptr", "Invalid pointer!");
         return NULL;
     }
     else return &(pt->item);
@@ -506,7 +526,7 @@ Item list_get_item(Iterator pt) {
     if(pt == NULL || pt == ((List*)pt)->this) {
         Item item_t;
         //memset(&item_t, 0, sizeof(item_t));
-        fprintf(stderr, "Empty list! Meaningless return value!\n");
+        list_error("list_get_item", "Empty list! Meaningless return value!");
         return item_t;
     }
     else return pt->item;
@@ -514,17 +534,17 @@ Item list_get_item(Iterator pt) {
 
 Iterator list_resize(List* plist, unsigned int n) {
     if(plist == NULL) {
-        fprintf(stderr, "plist is NULL!\n");
+        list_error("list_resize", "plist is NULL!");
         return NULL;
     }
     else {
         unsigned int i = plist->count;
         if(i == n || (int)n < 0) {
-            fprintf(stderr, "i==n OR n<0 \n");
+            list_error("list_resize", "i==n OR n<0");
             return plist->tail;
         }
         else if(n == 0) {
-            fprintf(stderr, "n==0!\n");
+            list_error("list_resize", "n==0!");
             list_clear(plist);
         }
         else if(i > n) {
@@ -575,7 +595,7 @@ Iterator list_resize(List* plist, unsigned int n) {
 
 int list_for_all(const List *plist, void (*foo)(Item*)) {
     if(plist->head == plist->this) {
-        fprintf(stderr, "(Empty List)\n");
+        list_error("list_for_all", "(Empty List)");
         return 0;
     }
     else {
@@ -590,9 +610,9 @@ int list_for_all(const List *plist, void (*foo)(Item*)) {
     }
 }
 
-int list_for_all_backward(const List *plist, void (*foo)(Item*)) {
+int list_for_all_reverse(const List *plist, void (*foo)(Item*)) {
     if(plist->head == plist->this) {
-        fprintf(stderr, "(Empty List)\n");
+        list_error("list_for_all_reverse", "(Empty List)");
         return 0;
     }
     else {
@@ -609,7 +629,7 @@ int list_for_all_backward(const List *plist, void (*foo)(Item*)) {
 
 Iterator list_splice(List *Dst, Iterator pos, List *Src) {
     if(Src->head == Src->this) {
-        fprintf(stderr, "Source is Empty!\n");
+        list_error("list_splice", "List Src is Empty!");
         return pos;
     }
     else {
@@ -642,15 +662,15 @@ Iterator list_splice(List *Dst, Iterator pos, List *Src) {
 
 Iterator list_splice1(List *Dst, Iterator pos, List *Src, Iterator x) {
     if(x == NULL || x == Src->this) {
-        fprintf(stderr, "Iterator x is not valid!\n");
+        list_error("list_splice1", "Iterator x is not valid!");
         return pos;
     }
     else if(pos == NULL) {
-        fprintf(stderr, "Iterator pos is not valid!\n");
+        list_error("list_splice1", "Iterator pos is not valid!");
         return pos;
     }
     else if(pos == x || pos == x->next) {
-        fprintf(stderr, "Iterator x equals to pos!\nOR is already before pos!\n");
+        list_error("list_splice1", "Iterator x equals to pos!\nOR is already before pos!");
         return  pos;
     }
     else {
@@ -700,15 +720,15 @@ Iterator list_splice1(List *Dst, Iterator pos, List *Src, Iterator x) {
 
 Iterator list_splice2(List *Dst, Iterator pos, List *Src, Iterator first, Iterator last) {
     if(pos == NULL) {
-        fprintf(stderr, "NULL Iterator pos!\n");
+        list_error("list_splice2", "NULL Iterator pos!");
         return NULL;
     }
     else if(first == NULL || first == Src->this) {
-        fprintf(stderr, "Invalid Iterator first!\n");
+        list_error("list_splice2", "Invalid Iterator first!");
         return NULL;
     }
     else if(last == NULL || first == last) {
-        fprintf(stderr, "Invalid Iterator last!\n");
+        list_error("list_splice2", "Invalid Iterator last!");
         return NULL;
     }
     else if(pos == last) {
@@ -725,11 +745,11 @@ Iterator list_splice2(List *Dst, Iterator pos, List *Src, Iterator first, Iterat
             count++;
         }
         if(pt == pos) {
-            fprintf(stderr, "Iterator pos included in the range [first, last)!\n");
+            list_error("list_splice2", "Iterator pos included in the range [first, last)!");
             return NULL;
         }
         else if(pt == NULL) {
-            fprintf(stderr, "Bad List (Pointer to NULL)!\n");
+            list_error("list_splice2", "Bad List (Pointer to NULL)!");
             return NULL;
         }
 
@@ -765,7 +785,7 @@ Iterator list_splice2(List *Dst, Iterator pos, List *Src, Iterator first, Iterat
         }
 
         if(last == End2) {
-            Src->tail = back2;
+            Src->tail = prev2;
         }
         else {
             last->prev = prev2;
@@ -918,20 +938,20 @@ Iterator list_unique(List *plist) {
 
 Iterator list_merge(List *Dst, List *Src) {
     if(Dst == Src) {
-        fprintf(stderr, "The same List!\n");
+        list_error("list_merge", "The same List!");
         return NULL;
     }
     else if(Dst->comp != Src->comp) {
         if(Dst->comp == NULL) {
-            fprintf(stderr, "Former List without specialized Comparer!\n");
+            list_error("list_merge", "Former List without specialized Comparer!");
             return NULL;
         }
         else if(Src->comp == NULL) {
-            fprintf(stderr, "Latter List without specialized Comparer!\n");
+            list_error("list_merge", "Latter List without specialized Comparer!");
             return NULL;
         }
         else {
-            fprintf(stderr, "Conflict Comparer!\n");
+            list_error("list_merge", "Conflict Comparer!");
             return NULL;
         }
     }
@@ -942,7 +962,7 @@ Iterator list_merge(List *Dst, List *Src) {
         Iterator end2 = Src->this;
         Iterator next;
         Comparer cmp = Dst->comp ? Dst->comp : list_default_comparer;
-        while(p1 && p2 && p2 != end2) {
+        while(p1 && p2 && p1!=end1 && p2 != end2) {
             if((*cmp)(&(p1->item), &(p2->item)) > 0) {
                 next = p2->next;
                 list_splice1(Dst, p1, Src, p2);
@@ -950,11 +970,10 @@ Iterator list_merge(List *Dst, List *Src) {
             }
             else {
                 p1 = p1->next;
-                if(p1 == end1) {
-                    list_splice2(Dst, p1, Src, p2, Src->this);
-                    break;
-                }
             }
+        }
+        if(p1==end1&&p2!=end2){
+            list_splice(Dst,p1,Src);
         }
         return p1;
     }
@@ -966,15 +985,15 @@ bool list_less(const List *plist1, const List *plist2) {
     }
     else if(plist1->comp != plist2->comp) {
         if(plist1->comp == NULL) {
-            fprintf(stderr, "Former List without specialized Comparer!\n");
+            list_error("list_less", "Former List without specialized Comparer!");
             return 0;
         }
         else if(plist2->comp == NULL) {
-            fprintf(stderr, "Latter List without specialized Comparer!\n");
+            list_error("list_less", "Latter List without specialized Comparer!");
             return 0;
         }
         else {
-            fprintf(stderr, "Conflict Comparer!\n");
+            list_error("list_less", "Conflict Comparer!");
             return 0;
         }
     }
@@ -1016,6 +1035,7 @@ bool list_less(const List *plist1, const List *plist2) {
 
 
 #ifdef SORT_MODE_QUICK
+//Using quick sort
 static void list_quick_sort(Comparer cmp, Iterator left, Iterator right){
     if(left==right||right->next==left||((List*)right)->head==left){
         return;
@@ -1045,15 +1065,73 @@ static void list_quick_sort(Comparer cmp, Iterator left, Iterator right){
 
 Iterator list_sort(List *plist){
     if(plist==NULL||plist->this!=(Iterator)plist){
-        fprintf(stderr,"Uninitialized List!\n");
+        list_error("list_sort","Uninitialized List!");
         return NULL;
     }
     else if(plist->count==0){
-        fprintf(stderr,"Empty List!\n");
+        list_error("list_sort","Empty List!");
         return NULL;
     }
     else{
         list_quick_sort(plist->comp?plist->comp:list_default_comparer,plist->head,plist->tail);
+        return plist->head;
+    }
+}
+
+#else
+//Using the merge similar to "tstl2cl"
+#ifdef DEBUG
+static void view(List *p){
+    Iterator pt=p->head;
+    int cnt=0;
+    puts("------------------------------");
+    printf("List %p:  head: %p  tail: %p  this: %p  count:%d\n",p,p->head,p->tail,p->this,p->count);
+    for(;pt!=p->this;pt=pt->next){
+        printf("Node %d:\n",cnt++);
+        printf("\tprev:%p  this:%p  next:%p\n",pt->prev,pt,pt->next);
+        printf("\t%.2f  %.2f\n",pt->item.coe,pt->item.pow);
+    }
+    puts("------------------------------\n\n");
+}
+#endif // DEBUG
+Iterator list_sort(List *plist){
+    if(plist==NULL||plist->this!=(Iterator)plist){
+        list_error("list_sort","Uninitialized List!");
+        return NULL;
+    }
+    else if(plist->count==0){
+        list_error("list_sort","Empty List!");
+        return NULL;
+    }
+    else{
+        List cry;
+        List cnt[64];
+        int fill=0,i=0;
+        list_create(&cry,plist->comp);
+        for(fill=0;fill<64;++fill){
+            list_create(&cnt[fill],plist->comp);
+        }
+        fill=0;
+        while(plist->count){
+            list_splice1(&cry,cry.head,plist,plist->head);
+
+
+            i=0;
+            while(i<fill&&cnt[i].count){
+                list_merge(&cry,&cnt[i++]);
+            }
+            list_swap(&cry,&cnt[i]);
+
+            if(i==fill){
+                ++fill;
+            }
+        }
+
+        for(i=1;i<fill;++i){
+            list_merge(&cnt[i],&cnt[i-1]);
+        }
+        list_swap(plist,&cnt[fill-1]);
+
         return plist->head;
     }
 }
