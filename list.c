@@ -5,7 +5,7 @@
 #include "list.h"
 
 inline static int list_error(char *location, char *err_msg){
-    return fprintf(stderr,"\n**********************\nError in %s :\n\t%s\n**********************\n",location,err_msg);
+    return fprintf(stderr,"\n********************\nError in %s :\n\t%s\n********************\n",location,err_msg);
 }
 
 inline static void* list_malloc(size_t size_of_element) {
@@ -39,12 +39,12 @@ unsigned int list_size(const List *plist) {
     return plist->count;
 }
 
-Iterator list_iterator_increase(Iterator pt) {
+Iterator list_iter_increase(Iterator pt) {
     if(pt == NULL)return NULL;
     else return (pt == ((List*)pt)->this ) ? ((List*)pt)->head : pt->next;
 }
 
-Iterator list_iterator_decrease(Iterator pt) {
+Iterator list_iter_decrease(Iterator pt) {
     if(pt == NULL)return NULL;
     else return (pt == ((List*)pt)->this ) ? ((List*)pt)->tail : pt->prev;
 }
@@ -54,6 +54,14 @@ Iterator list_begin(const List *plist) {
 }
 
 Iterator list_end(const List *plist) {
+    return plist->this;
+}
+
+Iterator list_rbegin(const List *plist){
+    return plist->tail;
+}
+
+Iterator list_rend(const List *plist){
     return plist->this;
 }
 
@@ -509,6 +517,20 @@ Iterator list_find(const List * plist, const Item * pitem) {
     else {
         for(; pt != plist->this ; pt = pt->next) {
             if(( (*cmp)(&(pt->item), pitem) ) == 0)return pt;
+        }
+    }
+    return NULL;
+}
+
+Iterator list_find_if(const List *plist, Pred pred){
+    Iterator pt =plist->head;
+    if(pred==NULL){
+        list_error("list_find_if","NULL predicate");
+        return NULL;
+    }
+    else{
+        for(;pt!=plist->this;pt=pt->next){
+            if((*pred)(&(pt->item)))return pt;
         }
     }
     return NULL;

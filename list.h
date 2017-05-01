@@ -12,6 +12,9 @@ typedef struct _item Item;
 
 typedef int (*Comparer)(const Item*, const Item*);
 typedef void (*Unary_Func)(Item *);
+typedef void (*Binary_Func)(Item *);
+typedef bool (*Pred)(const Item *);
+typedef bool (*Binary_pred)(const Item *, const Item *);
 
 struct _node {
     struct _node *prev, *next;
@@ -30,9 +33,9 @@ typedef struct _list List;
 
 List* list_create(List *plist, Comparer comp) ;
 
-Iterator list_iterator_increase(Iterator pt);
+Iterator list_iter_increase(Iterator pt);
 
-Iterator list_iterator_decrease(Iterator pt);
+Iterator list_iter_decrease(Iterator pt);
 
 bool list_empty(const List *plist);
 
@@ -41,6 +44,10 @@ unsigned int list_size(const List *plist);
 Iterator list_begin(const List *plist);
 
 Iterator list_end(const List *plist);
+
+Iterator list_rbegin(const List *plist);
+
+Iterator list_rend(const List *plist);
 
 Item list_front(const List *plist);
 
@@ -82,7 +89,9 @@ int list_for_all(const List *plist, void (*foo)(Item*));
 
 int list_for_all_reverse(const List *plist, void (*foo)(Item*));
 
-Iterator list_find(const List *plist, const Item*);
+Iterator list_find(const List *plist, const Item *pitem);
+
+Iterator list_find_if(const List *plist, Pred pred);
 
 Item *list_get_item_ptr(Iterator pt);
 
