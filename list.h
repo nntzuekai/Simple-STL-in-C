@@ -12,7 +12,7 @@ typedef struct _item Item;
 
 typedef int (*Comparer)(const Item*, const Item*);
 typedef void (*Unary_Func)(Item *);
-typedef void (*Binary_Func)(Item *);
+typedef void (*Binary_Func)(Item *, Item *);
 typedef bool (*Pred)(const Item *);
 typedef bool (*Binary_pred)(const Item *, const Item *);
 
@@ -33,9 +33,13 @@ typedef struct _list List;
 
 List* list_create(List *plist, Comparer comp) ;
 
-Iterator list_iter_increase(Iterator pt);
+Iterator list_iter_incrs(Iterator pt);
 
-Iterator list_iter_decrease(Iterator pt);
+Iterator list_iter_decrs(Iterator pt);
+
+Iterator list_riter_incrs(Iterator pt);
+
+Iterator list_riter_decrs(Iterator pt);
 
 bool list_empty(const List *plist);
 
@@ -112,5 +116,7 @@ Iterator list_unique(List *plist);
 Iterator list_merge(List *Dst, List *Src);
 
 Iterator list_sort(List *plist);
+
+bool list_is_sorted(List *plist);
 
 #endif // LIST_H_INCLUDED

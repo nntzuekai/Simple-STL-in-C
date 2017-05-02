@@ -4,8 +4,8 @@
 #include<error.h>
 #include "list.h"
 
-inline static int list_error(char *location, char *err_msg){
-    return fprintf(stderr,"\n********************\nError in %s :\n\t%s\n********************\n",location,err_msg);
+inline static int list_error(char *location, char *err_msg) {
+    return fprintf(stderr, "\n********************\nError in %s :\n\t%s\n********************\n", location, err_msg);
 }
 
 inline static void* list_malloc(size_t size_of_element) {
@@ -39,14 +39,24 @@ unsigned int list_size(const List *plist) {
     return plist->count;
 }
 
-Iterator list_iter_increase(Iterator pt) {
+Iterator list_iter_incrs(Iterator pt) {
     if(pt == NULL)return NULL;
-    else return (pt == ((List*)pt)->this ) ? ((List*)pt)->head : pt->next;
+    else return (pt == ((List*)pt)->this ) ? pt : pt->next;
 }
 
-Iterator list_iter_decrease(Iterator pt) {
+Iterator list_iter_decrs(Iterator pt) {
     if(pt == NULL)return NULL;
     else return (pt == ((List*)pt)->this ) ? ((List*)pt)->tail : pt->prev;
+}
+
+Iterator list_riter_incrs(Iterator pt) {
+    if(pt == NULL)return NULL;
+    else return (pt == ((List*)pt)->this) ? pt : pt->prev;
+}
+
+Iterator list_riter_decrs(Iterator pt) {
+    if(pt == NULL)return NULL;
+    else return (pt == ((List*)pt)->this) ? ((List*)pt)->head : pt->next;
 }
 
 Iterator list_begin(const List *plist) {
@@ -57,11 +67,11 @@ Iterator list_end(const List *plist) {
     return plist->this;
 }
 
-Iterator list_rbegin(const List *plist){
+Iterator list_rbegin(const List *plist) {
     return plist->tail;
 }
 
-Iterator list_rend(const List *plist){
+Iterator list_rend(const List *plist) {
     return plist->this;
 }
 
@@ -202,22 +212,22 @@ int list_swap(List *plist1, List *plist2) {
     List list_t;
     list_t = *plist1;
 
-    *plist1=*plist2;
-    plist1->this=(Iterator)plist1;
-    if(plist2->head==plist2->this){
-        plist1->head=plist1->tail=plist1->this;
+    *plist1 = *plist2;
+    plist1->this = (Iterator)plist1;
+    if(plist2->head == plist2->this) {
+        plist1->head = plist1->tail = plist1->this;
     }
-    else{
-        plist1->head->prev=plist1->tail->next=plist1->this;
+    else {
+        plist1->head->prev = plist1->tail->next = plist1->this;
     }
 
-    *plist2=list_t;
-    plist2->this=(Iterator)plist2;
-    if(list_t.head==list_t.this){
-        plist2->head=plist2->tail=plist2->this;
+    *plist2 = list_t;
+    plist2->this = (Iterator)plist2;
+    if(list_t.head == list_t.this) {
+        plist2->head = plist2->tail = plist2->this;
     }
-    else{
-        plist2->head->prev=plist2->tail->next=plist2->this;
+    else {
+        plist2->head->prev = plist2->tail->next = plist2->this;
     }
 
     return 1;
@@ -522,14 +532,14 @@ Iterator list_find(const List * plist, const Item * pitem) {
     return NULL;
 }
 
-Iterator list_find_if(const List *plist, Pred pred){
-    Iterator pt =plist->head;
-    if(pred==NULL){
-        list_error("list_find_if","NULL predicate");
+Iterator list_find_if(const List *plist, Pred pred) {
+    Iterator pt = plist->head;
+    if(pred == NULL) {
+        list_error("list_find_if", "NULL predicate");
         return NULL;
     }
-    else{
-        for(;pt!=plist->this;pt=pt->next){
+    else {
+        for(; pt != plist->this; pt = pt->next) {
             if((*pred)(&(pt->item)))return pt;
         }
     }
@@ -984,7 +994,7 @@ Iterator list_merge(List *Dst, List *Src) {
         Iterator end2 = Src->this;
         Iterator next;
         Comparer cmp = Dst->comp ? Dst->comp : list_default_comparer;
-        while(p1 && p2 && p1!=end1 && p2 != end2) {
+        while(p1 && p2 && p1 != end1 && p2 != end2) {
             if((*cmp)(&(p1->item), &(p2->item)) > 0) {
                 next = p2->next;
                 list_splice1(Dst, p1, Src, p2);
@@ -994,8 +1004,8 @@ Iterator list_merge(List *Dst, List *Src) {
                 p1 = p1->next;
             }
         }
-        if(p1==end1&&p2!=end2){
-            list_splice(Dst,p1,Src);
+        if(p1 == end1 && p2 != end2) {
+            list_splice(Dst, p1, Src);
         }
         return p1;
     }
@@ -1058,44 +1068,44 @@ bool list_less(const List *plist1, const List *plist2) {
 
 #ifdef SORT_MODE_QUICK
 //Using quick sort
-static void list_quick_sort(Comparer cmp, Iterator left, Iterator right){
-    if(left==right||right->next==left||((List*)right)->head==left){
+static void list_quick_sort(Comparer cmp, Iterator left, Iterator right) {
+    if(left == right || right->next == left || ((List*)right)->head == left) {
         return;
     }
-    Iterator i=left,j=right;
-    Item k=left->item;
-    while(i!=j){
-        while(i!=j&&cmp(&(j->item),&k)>=0){
-            j=j->prev;
+    Iterator i = left, j = right;
+    Item k = left->item;
+    while(i != j) {
+        while(i != j && cmp(&(j->item), &k) >= 0) {
+            j = j->prev;
         }
-        if(i!=j){
-            i->item=j->item;
+        if(i != j) {
+            i->item = j->item;
         }
 
-        while(i!=j&&cmp(&(i->item),&k)<=0){
-            i=i->next;
+        while(i != j && cmp(&(i->item), &k) <= 0) {
+            i = i->next;
         }
-        if(i!=j){
-            j->item=i->item;
+        if(i != j) {
+            j->item = i->item;
         }
     }
-    i->item=k;
-    list_quick_sort(cmp,left,i->prev);
-    list_quick_sort(cmp,i->next,right);
+    i->item = k;
+    list_quick_sort(cmp, left, i->prev);
+    list_quick_sort(cmp, i->next, right);
 }
 
 
-Iterator list_sort(List *plist){
-    if(plist==NULL||plist->this!=(Iterator)plist){
-        list_error("list_sort","Uninitialized List!");
+Iterator list_sort(List *plist) {
+    if(plist == NULL || plist->this != (Iterator)plist) {
+        list_error("list_sort", "Uninitialized List!");
         return NULL;
     }
-    else if(plist->count==0){
-        list_error("list_sort","Empty List!");
+    else if(plist->count == 0) {
+        list_error("list_sort", "Empty List!");
         return NULL;
     }
-    else{
-        list_quick_sort(plist->comp?plist->comp:list_default_comparer,plist->head,plist->tail);
+    else {
+        list_quick_sort(plist->comp ? plist->comp : list_default_comparer, plist->head, plist->tail);
         return plist->head;
     }
 }
@@ -1103,59 +1113,91 @@ Iterator list_sort(List *plist){
 #else
 //Using the merge similar to "tstl2cl"
 #ifdef DEBUG
-static void view(List *p){
-    Iterator pt=p->head;
-    int cnt=0;
+static void view(List *p) {
+    Iterator pt = p->head;
+    int cnt = 0;
     puts("------------------------------");
-    printf("List %p:  head: %p  tail: %p  this: %p  count:%d\n",p,p->head,p->tail,p->this,p->count);
-    for(;pt!=p->this;pt=pt->next){
-        printf("Node %d:\n",cnt++);
-        printf("\tprev:%p  this:%p  next:%p\n",pt->prev,pt,pt->next);
-        printf("\t%.2f  %.2f\n",pt->item.coe,pt->item.pow);
+    printf("List %p:  head: %p  tail: %p  this: %p  count:%d\n", p, p->head, p->tail, p->this, p->count);
+    for(; pt != p->this; pt = pt->next) {
+        printf("Node %d:\n", cnt++);
+        printf("\tprev:%p  this:%p  next:%p\n", pt->prev, pt, pt->next);
+        printf("\t%.2f  %.2f\n", pt->item.coe, pt->item.pow);
     }
     puts("------------------------------\n\n");
 }
 #endif // DEBUG
-Iterator list_sort(List *plist){
-    if(plist==NULL||plist->this!=(Iterator)plist){
-        list_error("list_sort","Uninitialized List!");
+Iterator list_sort(List *plist) {
+    if(plist == NULL || plist->this != (Iterator)plist) {
+        list_error("list_sort", "Uninitialized List!");
         return NULL;
     }
-    else if(plist->count==0){
-        list_error("list_sort","Empty List!");
+    else if(plist->count == 0) {
+        list_error("list_sort", "Empty List!");
         return NULL;
     }
-    else{
+    else {
         List cry;
         List cnt[64];
-        int fill=0,i=0;
-        list_create(&cry,plist->comp);
-        for(fill=0;fill<64;++fill){
-            list_create(&cnt[fill],plist->comp);
+        int fill = 0, i = 0;
+        list_create(&cry, plist->comp);
+        for(fill = 0; fill < 64; ++fill) {
+            list_create(&cnt[fill], plist->comp);
         }
-        fill=0;
-        while(plist->count){
-            list_splice1(&cry,cry.head,plist,plist->head);
+        fill = 0;
+        while(plist->count) {
+            list_splice1(&cry, cry.head, plist, plist->head);
 
 
-            i=0;
-            while(i<fill&&cnt[i].count){
-                list_merge(&cry,&cnt[i++]);
+            i = 0;
+            while(i < fill && cnt[i].count) {
+                list_merge(&cry, &cnt[i++]);
             }
-            list_swap(&cry,&cnt[i]);
+            list_swap(&cry, &cnt[i]);
 
-            if(i==fill){
+            if(i == fill) {
                 ++fill;
             }
         }
 
-        for(i=1;i<fill;++i){
-            list_merge(&cnt[i],&cnt[i-1]);
+        for(i = 1; i < fill; ++i) {
+            list_merge(&cnt[i], &cnt[i - 1]);
         }
-        list_swap(plist,&cnt[fill-1]);
+        list_swap(plist, &cnt[fill - 1]);
 
         return plist->head;
     }
 }
 
 #endif // SORT_MODE_QUICK
+
+bool list_is_sorted(List *plist) {
+    Iterator end = plist->this;
+    Iterator p1 = end;
+    Iterator p2 = plist->head;
+    Comparer cmp = plist->comp;
+
+    if(plist->count < 2)return true;
+
+    if(cmp) {
+        while(p2 && p2 != end) {
+            if(p1 != end && (*cmp)(&(p1->item), &(p2->item)) > 0) {
+                return false;
+            }
+
+            p1 = p2;
+            p2 = p2->next;
+        }
+        return true;
+    }
+    else {
+        while(p2 && p2 != end) {
+            if(p1 != end && memcmp(&(p1->item), &(p2->item), sizeof(Item)) > 0) {
+                return false;
+            }
+
+            p1 = p2;
+            p2 = p2->next;
+        }
+        return true;
+    }
+}
