@@ -4,10 +4,8 @@
 #undef DEBUG
 #include<stdbool.h>
 #include<stddef.h>
+#include "item_def.h"
 
-struct _item {
-    double coe, pow;
-};
 typedef struct _item Item;
 
 typedef int (*Comparer)(const Item*, const Item*);
