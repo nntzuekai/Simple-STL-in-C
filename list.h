@@ -1,6 +1,5 @@
 #ifndef LIST_H_INCLUDED
 #define LIST_H_INCLUDED
-#define SORT_MODE_QUICK 1
 #undef DEBUG
 #include<stdbool.h>
 #include<stddef.h>
@@ -9,8 +8,8 @@
 typedef struct _item Item;
 
 typedef int (*Comparer)(const Item*, const Item*);
-typedef void (*Unary_Func)(Item *);
-typedef void (*Binary_Func)(Item *, Item *);
+typedef void (*Unary_func)(Item *);
+typedef void (*Binary_func)(Item *, Item *);
 typedef bool (*Pred)(const Item *);
 typedef bool (*Binary_pred)(const Item *, const Item *);
 
@@ -83,13 +82,13 @@ bool list_equal(const List *plist1, const List *plist2);
 
 bool list_less(const List *plist1, const List *plist2);
 
-int list_for_each(Iterator first, Iterator last, void (*foo)(Item*));
+int list_for_each(Iterator first, Iterator last, Unary_func pf);
 
-int list_for_each_reverse(Iterator first, Iterator last, void (*foo)(Item*));
+int list_for_each_reverse(Iterator first, Iterator last, Unary_func pf);
 
-int list_for_all(const List *plist, void (*foo)(Item*));
+int list_for_all(const List *plist, Unary_func pf);
 
-int list_for_all_reverse(const List *plist, void (*foo)(Item*));
+int list_for_all_reverse(const List *plist, Unary_func pf);
 
 Iterator list_find(const List *plist, const Item *pitem);
 

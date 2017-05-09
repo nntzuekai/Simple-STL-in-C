@@ -30,7 +30,7 @@ inline static void* list_malloc(size_t size_of_element) {
 }
 
 //The default comparer to compare two items.
-//Using the memcmp to compare them by bytes.
+//Using memcmp to compare them by bytes.
 //Better not to use this, for it may not work correctly in most cases.
 inline static int list_default_comparer(const Item *pitem1, const Item *pitem2) {
     return memcmp(pitem1, pitem2, sizeof(Item));
@@ -534,11 +534,12 @@ int list_clear(List * plist) {
     return 1;
 }
 
+//Return if the two lists are equal to the defined rule.
 bool list_equal(const List * plist1, const List * plist2) {
-    if (plist1 == plist2) {
+    if (plist1 == plist2) {     //Identical list.
         return 1;
     }
-    else if (plist1->comp != plist2->comp) {
+    else if (plist1->comp != plist2->comp) {        //Catch situations of Comparer error.
         if (plist1->comp == NULL) {
             list_error("list_equal", "Former List without specialized Comparer!");
             return 0;
@@ -556,7 +557,7 @@ bool list_equal(const List * plist1, const List * plist2) {
         Iterator pt1, pt2;
         Iterator end1 = plist1->this, end2 = plist2->this;
 
-        if (plist1->comp && plist2->comp) {
+        if (plist1->comp && plist2->comp) {     //Using the Comparer.
             Comparer cmp = plist1->comp;
 
             for (pt1 = plist1->head, pt2 = plist2->head;
@@ -570,7 +571,7 @@ bool list_equal(const List * plist1, const List * plist2) {
             if (pt1 == end1 && pt2 == end2)return 1;
             else return 0;
         }
-        else {
+        else {      //Using memcmp.
             for (pt1 = plist1->head, pt2 = plist2->head;
                     pt1 != end1 && pt2 != end2;
                     pt1 = pt1->next, pt2 = pt2->next)
@@ -586,8 +587,10 @@ bool list_equal(const List * plist1, const List * plist2) {
     return 0;
 }
 
-int list_for_each(Iterator first, Iterator last, void(*foo)(Item*)) {
-    if (first == NULL || last == NULL || foo == NULL || first == ((List*)first)->this) {
+//Apply the function to each element in the range [ first , last ), in the forward order.
+//Return the number of elements that have been applied function to.
+int list_for_each(Iterator first, Iterator last, Unary_func pf) {
+    if (first == NULL || last == NULL || pf == NULL || first == ((List*)first)->this) {     //NULL ptr error.
         list_error("list_for_each", "invalid iterator first OR last OR invalid function OR empty list!");
         return 0;
     }
@@ -596,7 +599,7 @@ int list_for_each(Iterator first, Iterator last, void(*foo)(Item*)) {
         int count = 0;
 
         for (; pt != last; pt = pt->next) {
-            (*foo)(&(pt->item));
+            (*pf)(&(pt->item));
             count++;
         }
 
@@ -604,18 +607,19 @@ int list_for_each(Iterator first, Iterator last, void(*foo)(Item*)) {
     }
 }
 
-int list_for_each_reverse(Iterator first, Iterator last, void(*foo)(Item*)) {
-    if (first == NULL || last == NULL || foo == NULL || first == ((List*)first)->this) {
+//Apply function to every element in range ( first ,last ], in reserved order.
+//Return the number of elements applied function.
+int list_for_each_reverse(Iterator first, Iterator last, Unary_func pf) {
+    if (first == NULL || last == NULL || pf == NULL || last == ((List*)last)->this) {     //NULL ptr error.
         list_error("list_for_each_reverse", "Invalid Iterator first OR last OR Invalid function OR Empty list!");
         return 0;
     }
     else {
-        Iterator pt = (last == ((List*)last)->this) ? ((List*)last)->tail : last->prev;
-        Iterator off_first = first->prev;
+        Iterator pt = last;
         int count = 0;
 
-        for (; pt != off_first; pt = pt->prev) {
-            (*foo)(&(pt->item));
+        for (; pt != first; pt = pt->prev) {
+            (*pf)(&(pt->item));
             count++;
         }
 
@@ -623,6 +627,8 @@ int list_for_each_reverse(Iterator first, Iterator last, void(*foo)(Item*)) {
     }
 }
 
+//Find the first element the same to *pitem.
+//Return iterator to it if found one, otherwise return NULL.
 Iterator list_find(const List * plist, const Item * pitem) {
     Iterator pt = plist->head;
     Comparer cmp = plist->comp;
@@ -640,6 +646,8 @@ Iterator list_find(const List * plist, const Item * pitem) {
     return NULL;
 }
 
+//Return the first element satisfied to pred, that is make pred return true.
+//Return iterator to it if found, or return NULL.
 Iterator list_find_if(const List *plist, Pred pred) {
     Iterator pt = plist->head;
     if (pred == NULL) {
@@ -654,6 +662,8 @@ Iterator list_find_if(const List *plist, Pred pred) {
     return NULL;
 }
 
+//Return the pointer to Item of pt.
+//Return NULL if pt is NULL.
 Item *list_get_item_ptr(Iterator pt) {
     if (pt == NULL || pt == ((List*)pt)->this) {
         list_error("list_get_item_ptr", "Invalid pointer!");
@@ -662,6 +672,8 @@ Item *list_get_item_ptr(Iterator pt) {
     else return &(pt->item);
 }
 
+//Return the Item of pt.
+//Return nonsense if pt is NULL.
 Item list_get_item(Iterator pt) {
     if (pt == NULL || pt == ((List*)pt)->this) {
         Item item_t;
@@ -672,6 +684,11 @@ Item list_get_item(Iterator pt) {
     else return pt->item;
 }
 
+//Resize the list.
+//If list is resized to a larger size, the elements added will be arbitrary.
+//If resized to be smaller, the redundant part will be deleted.
+//Return iterator to the last element in resized list.
+//Return NULL if plist is NULL.
 Iterator list_resize(List* plist, unsigned int n) {
     if (plist == NULL) {
         list_error("list_resize", "plist is NULL!");
@@ -679,13 +696,17 @@ Iterator list_resize(List* plist, unsigned int n) {
     }
     else {
         unsigned int i = plist->count;
-        if (i == n || (int)n < 0) {
-            list_error("list_resize", "i==n OR n<0");
+        if (i == n) {
+            return plist->tail;
+        }
+        else if ((int)n < 0) {
+            list_error("list_resize", "n<0");
             return plist->tail;
         }
         else if (n == 0) {
             list_error("list_resize", "n==0!");
             list_clear(plist);
+            return plist->tail;
         }
         else if (i > n) {
             while (i-- > n) {
@@ -733,48 +754,68 @@ Iterator list_resize(List* plist, unsigned int n) {
     }
 }
 
-int list_for_all(const List *plist, void(*foo)(Item*)) {
+//Apply function to all elements in list in forward order.
+//Return number of elements applied it.
+int list_for_all(const List *plist, Unary_func pf) {
     if (plist->head == plist->this) {
         list_error("list_for_all", "(Empty List)");
+        return 0;
+    }
+    else if(pf == NULL) {
+        list_error("list_for_all", "NULL pf");
         return 0;
     }
     else {
         Iterator Real_End = plist->this;
         Iterator pt = plist->head;
         int count = 0;
-        for (; pt != NULL && pt != Real_End; pt = pt->next) {
-            (*foo)(&(pt->item));
+        for (; pt != Real_End; pt = pt->next) {
+            (*pf)(&(pt->item));
             count++;
         }
         return count;
     }
 }
 
-int list_for_all_reverse(const List *plist, void(*foo)(Item*)) {
+//Apply function to all elements in list in backward order.
+//Return number of elements applied it.
+int list_for_all_reverse(const List *plist, Unary_func pf) {
     if (plist->head == plist->this) {
         list_error("list_for_all_reverse", "(Empty List)");
+        return 0;
+    }
+    else if(pf == NULL) {
+        list_error("list_for_all_reverse", "NULL pf");
         return 0;
     }
     else {
         Iterator Real_End = plist->this;
         Iterator pt = plist->tail;
         int count = 0;
-        for (; pt != NULL && pt != Real_End; pt = pt->prev) {
-            (*foo)(&(pt->item));
+        for (; pt != Real_End; pt = pt->prev) {
+            (*pf)(&(pt->item));
             count++;
         }
         return 0;
     }
 }
 
+//Splice all elements from Src to Dst before pos, remaining the order.
+//Splice means the original elements will not exist, be moved to another position.
+//Dst must be distinct from Src.
+//Return pos.
 Iterator list_splice(List *Dst, Iterator pos, List *Src) {
     if (Src->head == Src->this) {
         list_error("list_splice", "List Src is Empty!");
         return pos;
     }
+    if(Dst == Src) {
+        list_error("list_splice", "Src==Dst");
+        return pos;
+    }
     else {
         Iterator End1 = Dst->this;
-        Iterator pprev = (pos == End1) ? Dst->tail : pos->prev;
+        Iterator pprev = (pos == End1) ? Dst->tail : pos->prev;     //pprev is the iterator previous to pos.
 
         if (pprev == End1) {
             Dst->head = Src->head;
@@ -800,6 +841,9 @@ Iterator list_splice(List *Dst, Iterator pos, List *Src) {
     }
 }
 
+//Splice the element of position x in Src to Dst in front of pos.
+//Dst can be identical to Src, which means splicing in one list.
+//Return x if succeeded, or return pos.
 Iterator list_splice1(List *Dst, Iterator pos, List *Src, Iterator x) {
     if (x == NULL || x == Src->this) {
         list_error("list_splice1", "Iterator x is not valid!");
@@ -809,16 +853,15 @@ Iterator list_splice1(List *Dst, Iterator pos, List *Src, Iterator x) {
         list_error("list_splice1", "Iterator pos is not valid!");
         return pos;
     }
-    else if (pos == x || pos == x->next) {
-        list_error("list_splice1", "Iterator x equals to pos!\nOR is already before pos!");
+    else if (pos == x || pos == x->next) {      //No need to operate.
         return  pos;
     }
     else {
         Iterator End1 = Dst->this;
         Iterator End2 = Src->this;
-        Iterator prev1 = (pos == End1) ? Dst->tail : pos->prev;
-        Iterator prev2 = x->prev;
-        Iterator next2 = x->next;
+        Iterator prev1 = (pos == End1) ? Dst->tail : pos->prev;     //prev1 is previous to pos.
+        Iterator prev2 = x->prev;       //prev2 is previous to x.
+        Iterator next2 = x->next;       //next2 is next to x.
 
         x->prev = prev1;
         x->next = pos;
@@ -858,6 +901,10 @@ Iterator list_splice1(List *Dst, Iterator pos, List *Src, Iterator x) {
     }
 }
 
+//Splice range [first , last) from Src to Dst before pos.
+//Dst can be identical to Src, which means splicing in one list.
+//Return pos if succeeds.
+//Return NULL if some ptr is NULL.
 Iterator list_splice2(List *Dst, Iterator pos, List *Src, Iterator first, Iterator last) {
     if (pos == NULL) {
         list_error("list_splice2", "NULL Iterator pos!");
@@ -871,7 +918,7 @@ Iterator list_splice2(List *Dst, Iterator pos, List *Src, Iterator first, Iterat
         list_error("list_splice2", "Invalid Iterator last!");
         return NULL;
     }
-    else if (pos == last) {
+    else if (pos == last) {     //Nothing to do.
         return pos;
     }
     else {
@@ -880,7 +927,7 @@ Iterator list_splice2(List *Dst, Iterator pos, List *Src, Iterator first, Iterat
         Iterator End1 = Dst->this;
         Iterator End2 = Src->this;
 
-        for (; pt && pt != last; pt = pt->next) {
+        for (; pt && pt != last; pt = pt->next) {       //Get how many elements will be spliced, check the validity by the way.
             if (pt == pos)break;
             count++;
         }
@@ -893,9 +940,9 @@ Iterator list_splice2(List *Dst, Iterator pos, List *Src, Iterator first, Iterat
             return NULL;
         }
 
-        Iterator prev1 = (pos == End1) ? Dst->tail : pos->prev;
-        Iterator prev2 = first->prev;
-        Iterator back2 = (last == End2) ? Src->tail : last->prev;
+        Iterator prev1 = (pos == End1) ? Dst->tail : pos->prev;     //prev1 is previous to pos.
+        Iterator prev2 = first->prev;       //prev2 is previous to first.
+        Iterator back2 = (last == End2) ? Src->tail : last->prev;       //back2 is the last one to splice(previous to last).
 
         first->prev = prev1;
         back2->next = pos;
@@ -937,6 +984,8 @@ Iterator list_splice2(List *Dst, Iterator pos, List *Src, Iterator first, Iterat
     return NULL;
 }
 
+//Delete all elements equal to item.
+//Return this iterator of operated list.
 Iterator list_remove(List *plist, const Item item) {
     Iterator pt = plist->head;
     Iterator end = plist->this;
@@ -1003,6 +1052,8 @@ Iterator list_remove(List *plist, const Item item) {
     return pt;
 }
 
+//If there are consecutive same elements in list, deleted repeating ones and just remain the first one.
+//Return this iterator.
 Iterator list_unique(List *plist) {
     Iterator p1, p2, prev, next;
     p1 = plist->this;
@@ -1076,6 +1127,11 @@ Iterator list_unique(List *plist) {
     return p2;
 }
 
+//Merge two sorted list into one.
+//Elements in Src will be merged into Dst, that is, after a successful merging Src is empty.
+//Both lists must have defined Comparer.
+//Return iterator next to the last element merged into Dst from Src.
+//Return NULL if exception happens.
 Iterator list_merge(List *Dst, List *Src) {
     if (Dst == Src) {
         list_error("list_merge", "The same List!");
@@ -1119,8 +1175,10 @@ Iterator list_merge(List *Dst, List *Src) {
     }
 }
 
+//Return if list1 is less than list2, compared in lexicographical order.
+//Both lists must have defined Comparer.
 bool list_less(const List *plist1, const List *plist2) {
-    if (plist1 == plist2) {
+    if (plist1 == plist2) {     //Identical.
         return 0;
     }
     else if (plist1->comp != plist2->comp) {
@@ -1173,6 +1231,13 @@ bool list_less(const List *plist1, const List *plist2) {
     return 0;
 }
 
+
+//Sort the list to be ascending using its Comparer.
+//Return head iterator of list.
+//Return NULL if some pointer is NULL.
+//Depending on whether Macro SORT_MODE_QUICK is defined, it will use three-way quick sort or merge sort to sort.
+//Number of elements should be no more than 2^64 if using merge sort.
+//If list is serious descended, merge sort is suggested.
 
 #ifdef SORT_MODE_QUICK
 //Using quick sort
@@ -1257,6 +1322,7 @@ static void view(List *p) {
     puts("------------------------------\n\n");
 }
 #endif // DEBUG
+
 Iterator list_sort(List *plist) {
     if (plist == NULL || plist->this != (Iterator)plist) {
         list_error("list_sort", "Uninitialized List!");
