@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<math.h>
-#include"list.h"
+#include "list.h"
+#include "overload.h"
 void l_print(Item *t) {
     if(t)printf("%.2f  %.2f\n", t->coe, t->pow);
     else puts("NULL");
@@ -21,29 +22,49 @@ int l_cmp(const Item *t1, const Item *t2) {
     }
     else return 0;
 }
+bool neg(const Item *t){
+    return t->coe<0;
+}
 int main(void) {
     List l1, l2;
     int n;
 
     create(l1, l_cmp);
-    create(l2, (Comparer)NULL);
+    create(l2, l_cmp);
 
+    printf("input n:\n");
     scanf("%d", &n);
+
     resize(l1, n);
-    for_all(l1, l_scan);
+    for_each(begin(l1), end(l1), l_scan);
 
-    //list_for_all(&l1, l_print);
-    sort(l1);
-
+    printf("Origin:\n");
     for_all(l1, l_print);
-    putchar('\n');
-    for_each_r( rend(l1), rbegin(l1), l_print);
 
-    printf("%u  %u\n", size(l1), size(l2));
+    assign(l2, l1);
+    sort(l2);
+    printf("Sorted:\n");
+    for_all(l2, l_print);
+
+    assign(l2, l1);
+    Iterator p1 = find(l2,((Item){5,1}));
+    Iterator p2 =find(l2,((Item){4,1}));
+    splice2(l2,find(l2,((Item){1,1})),l2,p1,p2);
+    printf("splice:\n");
+    for_all(l2,l_print);
+
+    printf("insert&erase:\n");
+    assign(l2,l1);
+    insert2(l2,begin(l2),begin(l1),end(l1));
+    erase2(l2,begin(l2),previous(end(l2)));
+    for_all(l2,l_print);
 
     assign(l2,l1);
-    unique(l2);
-    for_all_r(l2,l_print);
-
+    sort(l2);
+    splice1(l2,end(l2),l1,begin(l1));
+    size(l1);
+    push_back(l2,pop_back(l2));
+    push_front(l2,pop_front(l2));
+    remove(l2,((Item){0,0}));
     return 0;
 }
