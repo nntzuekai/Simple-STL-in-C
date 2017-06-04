@@ -79,12 +79,17 @@
 
 #define decrs(pos) _Generic((pos),\
                             Iterator: list_iter_decrs)(pos)
-#define previous(pos) decrs(pos)
-
+/*
+ * #define previous(pos) decrs(pos)
+ */
+#define previous(pos) (pos=decrs(pos))
 
 #define incrs(pos) _Generic((pos),\
                             Iterator: list_iter_incrs)(pos)
-#define next(pos) incrs(pos)
+/*
+ * #define next(pos) incrs(pos)
+ */
+#define next(pos) (pos=incrs(pos))
 
 #define less(Container1,Container2) _Generic((Container1),\
                                              List: _Generic((Container2),\

@@ -5,8 +5,6 @@
 #include<stddef.h>
 #include "item_def.h"
 
-typedef struct _item Item;
-
 typedef int (*Comparer)(const Item*, const Item*);
 typedef void (*Unary_func)(Item *);
 typedef void (*Binary_func)(Item *, Item *);

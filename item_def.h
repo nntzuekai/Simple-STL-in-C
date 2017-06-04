@@ -15,4 +15,5 @@ struct _item {
 };
 #endif // DOUBLE_ITEM
 
+typedef struct _item Item;
 #endif // ITEM_DEF_H_INCLUDED
